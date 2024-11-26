@@ -56,11 +56,11 @@ jobs:
         terraform apply -auto-approve tfplan
 
     # Step 7: Extract Terraform Outputs
-    - name: Extract Terraform Outputs
-      id: outputs
-      run: |
-        cd environments/development
-        echo "EC2_PUBLIC_IP=$(terraform output -raw ec2_public_ip)" >> $GITHUB_ENV
+    # - name: Extract Terraform Outputs
+    #   id: outputs
+    #   run: |
+    #     cd environments/development
+    #     echo "EC2_PUBLIC_IP=$(terraform output -raw ec2_public_ip)" >> $GITHUB_ENV
 
     # Step 8: Log in to Amazon ECR
     - name: Log in to Amazon ECR
@@ -84,7 +84,7 @@ jobs:
       run: |
         IMAGE_URI=$(aws ecr describe-repositories --repository-names $ECR_REPO_NAME --region $AWS_REGION --query "repositories[0].repositoryUri" --output text)
 
-        ssh -o StrictHostKeyChecking=no -i $KEY_PATH $EC2_USER@$EC2_PUBLIC_IP << EOF
+        ssh -o StrictHostKeyChecking=no -i $KEY_PATH ubuntu@$EC2_PUBLIC_IP << EOF
           sudo docker pull $IMAGE_URI:latest
           sudo docker stop nginx-container || true
           sudo docker rm nginx-container || true
@@ -108,12 +108,12 @@ jobs:
     # Step 3: Initialize Terraform
     - name: Terraform Init
       run: |
-        cd terraform
+        cd environments/development
         terraform init
 
     # Step 4: Destroy Terraform Infrastructure (Manual Trigger)
     - name: Terraform Destroy
       if: github.event_name == 'workflow_dispatch'
       run: |
-        cd terraform
+        cd environments/development
         terraform destroy -auto-approve
