@@ -113,7 +113,7 @@ jobs:
 
     # Step 4: Destroy Terraform Infrastructure (Manual Trigger)
     - name: Terraform Destroy
-      if: github.event_name == 'workflow_dispatch'
+      # if: github.event_name == 'workflow_dispatch'
       run: |
         cd environments/development
         terraform destroy -auto-approve
