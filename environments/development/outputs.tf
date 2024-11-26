@@ -21,10 +21,10 @@ output "autoscaling_group_id" {
 output "cloudwatch_alarm_names" {
   description = "List of CloudWatch alarm names"
   value       = [
-    module.cloudwatch.cpu_high,
-    module.cloudwatch.memory_high,
-    module.cloudwatch.status_check_failed,
-    module.cloudwatch.network_in_high,
-    module.cloudwatch.network_out_high,
+    module.cloudwatch.cpu_high_alarm_name,
+    module.cloudwatch.memory_high_alarm_name,
+    module.cloudwatch.status_check_failed_alarm_name,
+    module.cloudwatch.network_in_high_alarm_name,
+    module.cloudwatch.network_out_high_alarm_name,
   ]
 }
