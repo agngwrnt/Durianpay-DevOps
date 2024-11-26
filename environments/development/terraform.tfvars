@@ -1,0 +1,15 @@
+aws_region           = "ap-southeast-1"
+environment          = "dev"
+cidr_block           = "10.1.0.0/16"
+public_subnet_cidr   = "10.1.1.0/24"
+private_subnet_cidr  = "10.1.2.0/24"
+availability_zone    = "ap-southeast-1a"
+ami_id               = "ami-0c55b159cbfafe1f0"
+instance_type        = "t2.medium"
+min_size             = 2
+max_size             = 5
+desired_capacity     = 2
+cpu_threshold        = 45
+memory_threshold     = 80
+network_in_threshold = 10000000
+network_out_threshold = 10000000

@@ -1,0 +1,111 @@
+name: CI/CD Pipeline for Nginx Deployment with Terraform
+
+on:
+  push:
+    branches:
+    - main
+  workflow_dispatch:
+    # Allows manual triggering
+
+jobs:
+  deploy-infra-and-app:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ap-southeast-1
+      ECR_REPO_NAME: my-nginx-repo
+      EC2_USER: ubuntu
+      KEY_PATH: ~/.ssh/
+
+    steps:
+    # Step 1: Check out the code
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # Step 2: Set up Terraform
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.0
+
+    # Step 3: Initialize Terraform
+    - name: Terraform Init
+      run: |
+        cd environments/development
+        terraform init
+
+    # Step 4: Terraform Plan with Output to File
+    - name: Terraform Plan
+      run: |
+        cd environments/development
+        terraform plan -out=tfplan
+
+    # Step 5: Apply Terraform Plan
+    - name: Terraform Apply
+      id: terraform
+      run: |
+        cd environments/development
+        terraform apply -auto-approve tfplan
+
+    # Step 6: Extract Terraform Outputs
+    - name: Extract Terraform Outputs
+      id: outputs
+      run: |
+        cd environments/development
+        echo "EC2_PUBLIC_IP=$(terraform output -raw ec2_public_ip)" >> $GITHUB_ENV
+
+    # Step 7: Log in to Amazon ECR
+    - name: Log in to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    # Step 8: Build and tag the Docker image
+    - name: Build Docker Image
+      run: |
+        docker build -t $ECR_REPO_NAME:latest .
+
+    # Step 9: Push the Docker image to ECR
+    - name: Push Docker Image to ECR
+      run: |
+        IMAGE_URI=$(aws ecr describe-repositories --repository-names $ECR_REPO_NAME --region $AWS_REGION --query "repositories[0].repositoryUri" --output text)
+        docker tag $ECR_REPO_NAME:latest $IMAGE_URI:latest
+        docker push $IMAGE_URI:latest
+
+    # Step 10: Deploy Docker container to EC2
+    - name: Deploy to EC2
+      run: |
+        IMAGE_URI=$(aws ecr describe-repositories --repository-names $ECR_REPO_NAME --region $AWS_REGION --query "repositories[0].repositoryUri" --output text)
+
+        ssh -o StrictHostKeyChecking=no -i $KEY_PATH $EC2_USER@$EC2_PUBLIC_IP << EOF
+          sudo docker pull $IMAGE_URI:latest
+          sudo docker stop nginx-container || true
+          sudo docker rm nginx-container || true
+          sudo docker run -d --name nginx-container -p 80:80 $IMAGE_URI:latest
+        EOF
+
+  destroy-infra:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Check out the code
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # Step 2: Set up Terraform
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.0
+
+    # Step 3: Initialize Terraform
+    - name: Terraform Init
+      run: |
+        cd terraform
+        terraform init
+
+    # Step 4: Destroy Terraform Infrastructure (Manual Trigger)
+    - name: Terraform Destroy
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        cd terraform
+        terraform destroy -auto-approve
