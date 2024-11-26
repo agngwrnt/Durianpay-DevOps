@@ -53,7 +53,3 @@ resource "aws_cloudwatch_metric_alarm" "cpu_high" {
     AutoScalingGroupName = aws_autoscaling_group.my-asg.name
   }
 }
-
-output "asg_id" {
-  value = aws_autoscaling_group.my-asg.id
-}
