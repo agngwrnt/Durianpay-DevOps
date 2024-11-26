@@ -28,4 +28,3 @@ output "cloudwatch_alarm_names" {
     module.cloudwatch.network_out_high,
   ]
 }
-
