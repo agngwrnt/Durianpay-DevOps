@@ -51,7 +51,7 @@ resource "aws_autoscaling_policy" "scale_out" {
   scaling_adjustment     = 1
   adjustment_type        = "ChangeInCapacity"
   cooldown               = 300
-  autoscaling_group_name = aws_autoscaling_group.my-asg.name
+  autoscaling_group_name = aws_autoscaling_group.my_asg.name
 }
 
 resource "aws_cloudwatch_metric_alarm" "cpu_high" {
@@ -68,6 +68,6 @@ resource "aws_cloudwatch_metric_alarm" "cpu_high" {
   alarm_actions = [aws_autoscaling_policy.scale_out.arn]
 
   dimensions = {
-    AutoScalingGroupName = aws_autoscaling_group.my-asg.name
+    AutoScalingGroupName = aws_autoscaling_group.my_asg.name
   }
 }
