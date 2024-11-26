@@ -28,50 +28,58 @@ jobs:
       with:
         terraform_version: 1.5.0
 
-    # Step 3: Initialize Terraform
+    # Step 3: Configure AWS Credentials
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+    # Step 4: Initialize Terraform
     - name: Terraform Init
       run: |
         cd environments/development
         terraform init
 
-    # Step 4: Terraform Plan with Output to File
+    # Step 5: Terraform Plan with Output to File
     - name: Terraform Plan
       run: |
         cd environments/development
         terraform plan -out=tfplan
 
-    # Step 5: Apply Terraform Plan
+    # Step 6: Apply Terraform Plan
     - name: Terraform Apply
       id: terraform
       run: |
         cd environments/development
         terraform apply -auto-approve tfplan
 
-    # Step 6: Extract Terraform Outputs
+    # Step 7: Extract Terraform Outputs
     - name: Extract Terraform Outputs
       id: outputs
       run: |
         cd environments/development
         echo "EC2_PUBLIC_IP=$(terraform output -raw ec2_public_ip)" >> $GITHUB_ENV
 
-    # Step 7: Log in to Amazon ECR
+    # Step 8: Log in to Amazon ECR
     - name: Log in to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
-    # Step 8: Build and tag the Docker image
+    # Step 9: Build and tag the Docker image
     - name: Build Docker Image
       run: |
         docker build -t $ECR_REPO_NAME:latest .
 
-    # Step 9: Push the Docker image to ECR
+    # Step 10: Push the Docker image to ECR
     - name: Push Docker Image to ECR
       run: |
         IMAGE_URI=$(aws ecr describe-repositories --repository-names $ECR_REPO_NAME --region $AWS_REGION --query "repositories[0].repositoryUri" --output text)
         docker tag $ECR_REPO_NAME:latest $IMAGE_URI:latest
         docker push $IMAGE_URI:latest
 
-    # Step 10: Deploy Docker container to EC2
+    # Step 11: Deploy Docker container to EC2
     - name: Deploy to EC2
       run: |
         IMAGE_URI=$(aws ecr describe-repositories --repository-names $ECR_REPO_NAME --region $AWS_REGION --query "repositories[0].repositoryUri" --output text)
