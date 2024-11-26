@@ -1,24 +1,50 @@
 # Launch Configuration
-resource "aws_launch_configuration" "my-launch-config" {
-  name          = "${var.environment}-launch-config"
+resource "aws_launch_template" "my_launch_template" {
+  name_prefix   = "${var.environment}-launch-template"
   image_id      = var.ami_id
   instance_type = var.instance_type
+
+  network_interfaces {
+    associate_public_ip_address = false
+  }
+
+  tag_specifications {
+    resource_type = "instance"
+
+    tags = {
+      Name = "${var.environment}-instance"
+    }
+  }
 
   lifecycle {
     create_before_destroy = true
   }
-
-  associate_public_ip_address = false
 }
 
 # Auto Scaling Group
-resource "aws_autoscaling_group" "my-asg" {
-  launch_configuration = aws_launch_configuration.my-launch-config.id
-  min_size             = var.min_size
-  max_size             = var.max_size
-  desired_capacity     = var.desired_capacity
-  vpc_zone_identifier  = var.subnet_ids # Private Subnets
+resource "aws_autoscaling_group" "my_asg" {
+  name                = "${var.environment}-asg"
+  min_size            = var.min_size
+  max_size            = var.max_size
+  desired_capacity    = var.desired_capacity
+  vpc_zone_identifier = var.subnet_ids # Private Subnets
+
+  launch_template {
+    id      = aws_launch_template.my_launch_template.id
+    version = "$Latest"
+  }
+
+  tag {
+    key                 = "Name"
+    value               = "${var.environment}-asg-instance"
+    propagate_at_launch = true
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
+
 
 resource "aws_autoscaling_policy" "scale_out" {
   name                   = "${var.environment}-scale-out"
