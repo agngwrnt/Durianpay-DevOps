@@ -10,7 +10,7 @@ module "vpc" {
 
 module "autoscaling" {
   source           = "../../modules/autoscaling"
-  ami_id           = "ami-0c55b159cbfafe1f0"
+  ami_id           = "ami-03fa85deedfcac80b"
   instance_type    = "t2.medium"
   min_size         = 2
   max_size         = 5
