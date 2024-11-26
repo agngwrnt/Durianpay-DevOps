@@ -18,14 +18,6 @@ resource "aws_autoscaling_group" "my-asg" {
   max_size             = var.max_size
   desired_capacity     = var.desired_capacity
   vpc_zone_identifier  = var.subnet_ids # Private Subnets
-
-  tags = [
-    {
-      key                 = "Name"
-      value               = "${var.environment}-asg-instance"
-      propagate_at_launch = true
-    }
-  ]
 }
 
 resource "aws_autoscaling_policy" "scale_out" {
